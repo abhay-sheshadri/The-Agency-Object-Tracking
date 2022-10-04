@@ -39,15 +39,14 @@ def get_resnet_structure(n_layers=50):
     ]
 
 
-
 def create_resnet_block(in_channels, out_channels, num_units, stride=2):
-    modules = [Bottleneck(in_channels, out_channels, stride)]
+    modules = [ResnetBlock(in_channels, out_channels, stride)]
     for i in range(num_units - 1):
-        modules.append(Bottleneck(out_channels, out_channels, 1))
+        modules.append(ResnetBlock(out_channels, out_channels, 1))
     return nn.Sequential(*modules)
 
 
-class Bottleneck(nn.Module):
+class ResnetBlock(nn.Module):
     """
     Essentially a ResNet block
     """
@@ -85,8 +84,10 @@ class SqueezeExcitation(nn.Module):
     def __init__(self, channels, reduction):
         super().__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(channels, channels // reduction, 1, padding=0, bias=False)
-        self.fc2 = nn.Conv2d(channels // reduction, channels, 1, padding=0, bias=False)
+        self.fc1 = nn.Conv2d(channels, channels //
+                             reduction, 1, padding=0, bias=False)
+        self.fc2 = nn.Conv2d(channels // reduction,
+                             channels, 1, padding=0, bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.sigmoid = nn.Sigmoid()
 
@@ -98,7 +99,7 @@ class SqueezeExcitation(nn.Module):
 
 
 class ResnetModel(nn.Module):
-    
+
     def __init__(self, input_nc, output_nc, activation=None, n_layers=50, res=(256, 256)):
         super().__init__()
 
@@ -110,7 +111,8 @@ class ResnetModel(nn.Module):
             nn.PReLU(64)
         )
 
-        self.body = nn.Sequential(*[create_resnet_block(**block) for block in get_resnet_structure(n_layers=n_layers)])
+        self.body = nn.Sequential(*[create_resnet_block(**block)
+                                  for block in get_resnet_structure(n_layers=n_layers)])
         self.fc1 = nn.Linear(self.get_size(input_nc, res), output_nc)
 
     def get_size(self, input_nc, resolution):
